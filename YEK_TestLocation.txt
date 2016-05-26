@@ -1,0 +1,78 @@
+package com.appiancorp.testlocation;
+
+import org.apache.log4j.Logger;
+
+import com.appiancorp.services.ServiceContext;
+import com.appiancorp.suiteapi.expression.annotations.Function;
+import com.appiancorp.suiteapi.expression.annotations.Parameter;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+
+import org.apache.http.util.EntityUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+@com.appiancorp.suiteapi.expression.annotations.AppianScriptingFunctionsCategory
+public class YEK_TestLocation {
+
+	private static final Logger LOG = Logger.getLogger(YEK_TestLocation.class);
+
+	@Function
+	public String YEK_TestLocation(ServiceContext sc, @Parameter String streetaddress, @Parameter String city,
+			@Parameter String postalcode, @Parameter String APIKey) {
+		
+		HttpClient client = new DefaultHttpClient();
+		String StreetAddress = streetaddress;
+		String City = city;
+		String PostalCode = postalcode;
+		String CountryCode = "UK";
+		String Locale = "en";
+		String MyAPIKey = APIKey;
+		String APIURL = "http://api.address-validator.net/api/verify";
+		String result = "NoConnection";
+		
+		try {
+		    HttpPost request = new HttpPost(APIURL);
+		    List <NameValuePair> Input = new ArrayList<NameValuePair>();
+		    Input.add(new BasicNameValuePair("StreetAddress", StreetAddress));
+		    Input.add(new BasicNameValuePair("City", City));
+		    Input.add(new BasicNameValuePair("PostalCode", PostalCode));
+				    Input.add(new BasicNameValuePair("CountryCode", CountryCode));
+		    Input.add(new BasicNameValuePair("Locale", Locale));
+		    Input.add(new BasicNameValuePair("APIKey", APIKey));
+		    request.setEntity(new UrlEncodedFormEntity(Input));
+		    HttpResponse response = client.execute(request);
+		    HttpEntity entity = response.getEntity();
+		    String Output = EntityUtils.toString(entity, "UTF-8");
+		    JSONParser parser = new JSONParser();
+		    Object obj = parser.parse(Output);
+		    JSONObject jsonObject = (JSONObject) obj;
+		     result = (String) jsonObject.get("status");
+		 /*   if (result.equalsIgnoreCase("VALID")) {
+		        String formattedaddress = (String) jsonObject.get("formattedaddress");
+		    }
+		*/
+		} catch (IOException e) {
+		    e.printStackTrace();
+		} catch (ParseException e) {
+		    e.printStackTrace();
+		} finally {
+		    client.getConnectionManager().shutdown();
+		}
+		
+		return result;
+	}
+
+}
